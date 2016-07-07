@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="/Users/Grace/Downloads/stanford-ner-2015-12-09/stanford-ner.jar"/>
 	<classpathentry kind="lib" path="/Users/Grace/Downloads/slf4j-1.7.21/slf4j-simple-1.7.21.jar"/>
 	<classpathentry kind="lib" path="/Users/Grace/Downloads/slf4j-1.7.21/slf4j-api-1.7.21.jar"/>
+	<classpathentry kind="lib" path="/Users/Grace/Downloads/jxl.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
