@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -28,6 +29,13 @@ public class Training {
 	private ArrayList<Record> knownLocations = new ArrayList<Record>();
 	private ArrayList<PredictLocation> predictions = new ArrayList<PredictLocation>();
 	String hocrFile = "";
+	private ArrayList<Double> x0List=new ArrayList<Double>();
+	private ArrayList<Double> x1List=new ArrayList<Double>();
+	private ArrayList<Double> y0List=new ArrayList<Double>();
+	private ArrayList<Double> y1List=new ArrayList<Double>();
+	private ArrayList<String> wordList=new ArrayList<String>();
+	private ArrayList<Double> WidthList=new ArrayList<Double>();
+	private ArrayList<Double> HeightList=new ArrayList<Double>();
 	
 	/**
 	 * this method records the name locations obtained from sample files manually
@@ -96,13 +104,13 @@ public class Training {
 				}
 			}
 		}
-		System.out.println("Human names may be located at:");
+//		System.out.println("Human names may be located at:");
 		for(PredictLocation p:predictions){
 			p.setRate((double)p.getCount()/knownLocations.size());
-			if(p.getRate() > 0.1){
-				System.out.print(p.getX0()+" "+p.getY0()+" "+p.getX1()+" "+p.getY1()+"  ");
-				System.out.println("Probabality: "+((int)(p.getRate()*100))+"%");
-			}
+//			if(p.getRate() > 0.1){
+//				System.out.print(p.getX0()+" "+p.getY0()+" "+p.getX1()+" "+p.getY1()+"  ");
+//				System.out.println("Probabality: "+((int)(p.getRate()*100))+"%");
+//			}
 			
 		}
 	}
@@ -126,7 +134,7 @@ public class Training {
 		Scanner in = new Scanner(System.in);
 		System.out.println("Please enter file name(including absolute path):");
 		String inputTiff = in.nextLine();
-//		String inputTiff = "/Users/Grace/Desktop/inputTiff/39653_001_Bill.tif";		
+//		String inputTiff = "/Users/Grace/Desktop/inputTiff/39653_003.tif";		
 //		output hocr file and txt file will be in the same folder with the input tiff file
 		String outputHocrName = inputTiff.replace(".tif", "");
 		hocrFile = outputHocrName;
@@ -214,10 +222,10 @@ public class Training {
 	public void analyzeHOCR(){
 		
 		ArrayList<String> newNames = analyzeTIFF();
-		ArrayList<Double> x0List = new ArrayList<>();
-		ArrayList<Double> y0List = new ArrayList<>();
-		ArrayList<Double> x1List = new ArrayList<>();
-		ArrayList<Double> y1List = new ArrayList<>();
+		ArrayList<Double> nameX0List = new ArrayList<>();
+		ArrayList<Double> nameY0List = new ArrayList<>();
+		ArrayList<Double> nameX1List = new ArrayList<>();
+		ArrayList<Double> nameY1List = new ArrayList<>();
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder;
 		try {
@@ -230,32 +238,36 @@ public class Training {
 				org.w3c.dom.Node node = nList.item(i);
 				org.w3c.dom.Element ele = (org.w3c.dom.Element) node;
 				if(ele.getAttribute("class").equals("ocrx_word")){
+					wordList.add(ele.getTextContent());
+					String[] coordinate = ele.getAttribute("title").split(" ");
+					double tempX0 = Double.parseDouble(coordinate[1]);
+					double tempY0 = Double.parseDouble(coordinate[2]);
+					double tempX1 = Double.parseDouble(coordinate[3]);
+					double tempY1 = Double.parseDouble(coordinate[4].replace(";", ""));
+					x0List.add(tempX0);
+					y0List.add(tempY0);
+					x1List.add(tempX1);
+					y1List.add(tempY1);	
 					for(String name: newNames){
 						if(ele.getTextContent().equals(name)){
-							System.out.print(ele.getTextContent()+" ");
-							String[] coordinate = ele.getAttribute("title").split(" ");
-							double tempX0 = Double.parseDouble(coordinate[1]);
-							double tempY0 = Double.parseDouble(coordinate[2]);
-							double tempX1 = Double.parseDouble(coordinate[3]);
-							double tempY1 = Double.parseDouble(coordinate[4].replace(";", ""));
-							x0List.add(tempX0);
-							y0List.add(tempY0);
-							x1List.add(tempX1);
-							y1List.add(tempY1);
-							boolean isCorrect = false;
-							System.out.print("Location: "+ tempX0+" "+tempY0+" "+tempX1+" "+tempY1+" ");
-							for(PredictLocation p: predictions){
-								if(p.getRate()>0.1){
-									if( p.getX0() <= (tempX0+tempX1)/2 
-											&& p.getX1() >= (tempX0+tempX1)/2
-											&& p.getY0() <= (tempY0+tempY1)/2
-											&& p.getY1() >= (tempY0+tempY1)/2){
-										isCorrect = true;				
-									}
-								}
-							}
-							if(isCorrect)System.out.println("Prediction correct!");
-							else System.out.println("Oops Prediction wrong!");
+							nameX0List.add(tempX0);
+							nameY0List.add(tempY0);
+							nameX1List.add(tempX1);
+							nameY1List.add(tempY1);
+//							boolean isCorrect = false;
+//							System.out.print("Location: "+ tempX0+" "+tempY0+" "+tempX1+" "+tempY1+" ");
+//							for(PredictLocation p: predictions){
+//								if(p.getRate()>0.1){
+//									if( p.getX0() <= (tempX0+tempX1)/2 
+//											&& p.getX1() >= (tempX0+tempX1)/2
+//											&& p.getY0() <= (tempY0+tempY1)/2
+//											&& p.getY1() >= (tempY0+tempY1)/2){
+//										isCorrect = true;				
+//									}
+//								}
+//							}
+//							if(isCorrect)System.out.println("Prediction correct!");
+//							else System.out.println("Oops Prediction wrong!");
 						}
 					}		
 				}
@@ -274,13 +286,13 @@ public class Training {
 		
 		//use new names and their locations to update the database, increase accuracy of next prediction
 		for(int i=0; i<newNames.size();i++){
-			knownLocations.add(new Record(newNames.get(i),x0List.get(i),x1List.get(i), y0List.get(i),y1List.get(i)));
+			knownLocations.add(new Record(newNames.get(i),nameX0List.get(i),nameX1List.get(i), nameY0List.get(i),nameY1List.get(i)));
 			for(PredictLocation p:predictions){
 				
-				if( p.getX0() <= (x0List.get(i)+ x1List.get(i))/2 
-						&& p.getX1() >= (x0List.get(i)+x1List.get(i))/2
-						&& p.getY0() <= (y0List.get(i)+y1List.get(i))/2
-						&& p.getY1() >= (y0List.get(i)+y1List.get(i))/2){
+				if( p.getX0() <= (nameX0List.get(i)+ nameX1List.get(i))/2 
+						&& p.getX1() >= (nameX0List.get(i)+nameX1List.get(i))/2
+						&& p.getY0() <= (nameY0List.get(i)+nameY1List.get(i))/2
+						&& p.getY1() >= (nameY0List.get(i)+nameY1List.get(i))/2){
 					
 					p.increment();
 				}			
@@ -292,12 +304,117 @@ public class Training {
 		}
 	
 	}
+	
+
+	/**
+	 * this method is writing a html file for prediction visualization
+	 * @throws IOException
+	 */
+	public void writeHTML(String htmlPath) throws IOException{
+		
+		File htmlFile = new File(htmlPath);
+		htmlFile.createNewFile();
+		shrink();
+		setWidthAndHeight();
+		FileWriter writer = new FileWriter(htmlFile);
+		System.out.println("start creating HTML....");
+		writer.write("<html>\n"
+				+"<head>\n"
+				+"<style type=\"text/css\">\n");
+
+		writer.write("</style>\n"
+				+"<script type=\"text/javascript\">\n"
+				+"function shrink()\n"
+				+"{\n"
+				+"var textDivs=document.getElementsByClassName(\"dynamicDiv\");\n"
+				+"var textDivsLength = textDivs.length;\n"
+				+"for(var i=0; i<textDivsLength; i++) {\n"
+				+"var textDiv = textDivs[i];\n"
+				+"var textSpan = textDiv.getElementsByClassName(\"dynamicSpan\")[0];\n"
+				+"textSpan.style.fontSize = 64;\n"
+				+"while(textSpan.offsetHeight > textDiv.offsetHeight)\n"
+				+"{\n"
+				+"textSpan.style.fontSize = parseInt(textSpan.style.fontSize) - 1;\n"
+				+"}\n"
+				+"}\n"
+				+"}\n"
+				+"</script>\n");
+		writer.write("</head>\n");
+		writer.write("<body onload=\"shrink()\">\n");
+		//highlight the predict area
+		for(PredictLocation p:predictions){
+			if(p.getRate()>0.1){
+				writer.write("<div class=\"dynamicDiv\""
+						+" style=\"position:absolute;"
+						+"left:"+p.getX0()/2+"px;"
+						+"top:"+p.getY0()/2+"px;"
+						+"width:"+(p.getX1()/2 - p.getX0()/2)+"px;"
+						+"height:"+(p.getY1()/2 - p.getY0()/2)+"px;"
+						+"text-align:center;font-size:64px;border: 2px solid red\">\n"
+						+"<span class=\"dynamicSpan\">\n"
+						+""+"\n"
+						+"</span>\n"
+						+"</div>\n");
+			}
+		}
+		//write all the elements
+		for(int i=0;i<wordList.size();i++){
+			writer.write("<div class=\"dynamicDiv\""
+					+" style=\"position:absolute;"
+					+"left:"+x0List.get(i)+"px;"
+					+"top:"+y0List.get(i)+"px;"
+					+"width:"+WidthList.get(i)+"px;"
+					+"height:"+HeightList.get(i)+"px;"
+					+"text-align:center;font-size:64px\">\n"
+					+"<span class=\"dynamicSpan\">\n"
+					+wordList.get(i)+"\n"
+					+"</span>\n"
+					+"</div>\n");
+		}
+		writer.write("</div>");
+		writer.write("</body>\n"+"</html>\n");
+		writer.flush();
+	    writer.close();	
+		System.out.println("HTML created!");
+	}
+
+	/**
+	 * shrink the bbox coordinates because most of them are very large
+	 * the relative position won't change
+	 */
+	private void shrink(){
+		for(int i=0;i<wordList.size();i++){
+			double tempx0 = x0List.get(i);
+			double tempy0 = y0List.get(i);
+			double tempx1 = x1List.get(i);
+			double tempy1 = y1List.get(i);
+			x0List.set(i, tempx0/2);
+			y0List.set(i, tempy0/2);
+			x1List.set(i, tempx1/2);
+			y1List.set(i, tempy1/2);
+		}
+	}
+	
+	private void setWidthAndHeight(){
+		for(int i=0;i<x0List.size();i++){
+			WidthList.add(x1List.get(i)-x0List.get(i));
+			HeightList.add(y1List.get(i)-y0List.get(i));
+		}
+	}
+	
 
 	public static void main(String[] args){
 		Training t = new Training();
 		t.populateRecords();
 		t.setPredictions();
-		t.analyzeHOCR();		
+		t.analyzeHOCR();
+		try {
+			t.writeHTML("predict.html");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 }

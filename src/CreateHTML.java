@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class CreateHTML {
 	
-	private String htmlPath ="output.html";
+	private String htmlPath;
 	private ArrayList<String> x0List=new ArrayList<String>();
 	private ArrayList<String> x1List=new ArrayList<String>();
 	private ArrayList<String> y0List=new ArrayList<String>();
@@ -16,8 +16,9 @@ public class CreateHTML {
 	private ArrayList<Integer> HeightList=new ArrayList<Integer>();
 
 	private int number;
-	public CreateHTML(ParseExcel parseXLSX){
-
+	public CreateHTML(String html, ParseExcel parseXLSX){
+		
+		htmlPath = html;
 		this.x0List = parseXLSX.getX0List();
 		this.x1List = parseXLSX.getX1List();
 		this.y0List = parseXLSX.getY0List();
@@ -133,7 +134,7 @@ public class CreateHTML {
 	
 	public static void main(String[] args){
 		ParseExcel parseXLSX = new ParseExcel("name_position_97.xls");
-		CreateHTML writeHTML = new CreateHTML(parseXLSX);
+		CreateHTML writeHTML = new CreateHTML("output.html",parseXLSX);
 		try {
 			writeHTML.outPut();
 		} catch (IOException e) {
