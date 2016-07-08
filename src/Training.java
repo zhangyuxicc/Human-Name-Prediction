@@ -85,9 +85,9 @@ public class Training {
 	 */
 	public void setPredictions(){
 		
-		predictions.add(new PredictLocation(1200, 1200, 1700, 1400));
+		predictions.add(new PredictLocation(1250, 1200, 1700, 1400));
 		predictions.add(new PredictLocation(100, 1200, 800, 1500 ));
-		predictions.add(new PredictLocation(800, 1200, 1300, 1350));
+		predictions.add(new PredictLocation(800, 1200, 1250, 1350));
 		predictions.add(new PredictLocation(400, 2350, 900, 2800));
 		predictions.add(new PredictLocation(150, 600, 750, 750));
 		predictions.add(new PredictLocation(1500, 550, 2100, 750));
